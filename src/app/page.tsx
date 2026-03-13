@@ -1,42 +1,85 @@
 "use client";
+
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+// 1. Import Zod dan React Hook Form
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// 2. Buat Skema Validasi Zod (Sangat Ketat & Profesional)
+const formSchema = z.object({
+  urlAsli: z.string().min(1, { message: "URL Asli tidak boleh kosong." }).url({
+    message: "Format tidak valid. Harus diawali http:// atau https://",
+  }),
+  slug: z
+    .string()
+    .min(3, { message: "Slug minimal 3 karakter." })
+    .max(20, { message: "Slug maksimal 20 karakter." })
+    .regex(/^[a-z0-9-]+$/, {
+      message: "Slug hanya boleh berisi huruf kecil, angka, dan strip (-).",
+    }),
+});
+
+// Infer type dari schema
+type FormData = z.infer<typeof formSchema>;
+
 export default function Home() {
-  const [urlAsli, setUrlAsli] = useState("");
-  const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 3. Inisialisasi React Hook Form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      urlAsli: "",
+      slug: "",
+    },
+  });
+
+  // 4. Fungsi Submit yang baru (Data sudah PASTI valid saat masuk ke sini)
+  const onSubmit = async (data: FormData) => {
     setLoading(true);
+    setSuccessMessage(""); // Reset pesan sukses
 
-    // Logika simpan ke Supabase akan di sini
-    const { data, error } = await supabase
+    // Simpan ke Supabase
+    const { error } = await supabase
       .from("links")
-      .insert([{ url_asli: urlAsli, slug: slug }]);
+      .insert([{ url_asli: data.urlAsli, slug: data.slug }]);
 
     if (error) {
-      alert("Gagal membuat link: " + error.message);
+      // Cek apakah error karena slug sudah dipakai (Error code unik di PostgreSQL biasanya 23505)
+      if (error.code === "23505") {
+        alert("Gagal: Slug ini sudah digunakan. Silakan pilih slug lain.");
+      } else {
+        alert("Gagal membuat link: " + error.message);
+      }
     } else {
-      alert("Link berhasil dibuat!");
-      setUrlAsli("");
-      setSlug("");
+      setSuccessMessage(`Berhasil! Link Anda: localhost:3000/${data.slug}`);
+      reset(); // Kosongkan form otomatis setelah berhasil
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-950 p-4">
+    <div
+      className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-950
+       p-4"
+    >
       <main className="w-full max-w-md">
-        {" "}
         <div
-          className="flex flex-col bg-white dark:bg-zinc-900 shadow-xl rounded-2xl p-8 border border-zinc-200
-      dark:border-zinc-800"
+          className="flex flex-col bg-white dark:bg-zinc-900 shadow-xl rounded-2xl p-8 border
+       border-zinc-200 dark:border-zinc-800"
         >
           <div className="flex justify-center mb-8">
             <Image
@@ -48,73 +91,71 @@ export default function Home() {
               priority
             />
           </div>
+
           <div className="w-full space-y-6 text-center sm:text-left">
-            {" "}
-            <div className="w-full max-w-sm space-y-6">
-              <h2 className="font-bold text-2xl text-zinc-900 dark:text-zinc-50 text-center">
-                Generate Short Link
-              </h2>
-              <form onSubmit={handleGenerate} className="space-y-6 text-left">
-                <div className="space-y-2">
-                  <Label>Real URL</Label>
-                  <Input
-                    id="url_asli"
-                    name="url_asli"
-                    type="text"
-                    required
-                    className="mt-1"
-                    placeholder="Enter your long URL"
-                    value={urlAsli}
-                    onChange={(e) => setUrlAsli(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Short URL</Label>
+            <h2 className="font-bold text-2xl text-zinc-900 dark:text-zinc-50 text-center">
+              Generate Short Link
+            </h2>
+
+            {successMessage && (
+              <div
+                className="p-3 bg-green-100 text-green-700 rounded-md text-sm text-center border
+       border-green-200"
+              >
+                {successMessage}
+              </div>
+            )}
+
+            {/* Hubungkan form dengan handleSubmit dari React Hook Form */}
+
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-6 text-left"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="urlAsli">Real URL</Label>
+                <Input
+                  id="urlAsli"
+                  type="text"
+                  placeholder="https://contoh.com/artikel-sangat-panjang"
+                  {...register("urlAsli")} // Pengganti value & onChange
+                  className={errors.urlAsli ? "border-red-500" : ""}
+                />
+                {/* Tampilkan pesan error Zod jika ada */}
+                {errors.urlAsli && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.urlAsli.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="slug">Short URL</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-500 text-sm">/</span>
                   <Input
                     id="slug"
-                    name="slug"
                     type="text"
-                    required
-                    placeholder="Custom short name"
-                    className="mt-1"
-                    value={slug} // Tambahkan baris ini
-                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="promoku-2026"
+                    {...register("slug")} // Pengganti value & onChange
+                    className={errors.slug ? "border-red-500" : ""}
                   />
                 </div>
+                {/* Tampilkan pesan error Zod jika ada */}
+                {errors.slug && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.slug.message}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Generating..." : "Generate"}
-                  </Button>
-                </div>
-              </form>
-            </div>
+              <div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Generating..." : "Generate"}
+                </Button>
+              </div>
+            </form>
           </div>
-          {/* <div className="mt-5 flex flex-col gap-4 text-base font-medium sm:flex-row">
-            <a
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-              href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                className="dark:invert"
-                src="/vercel.svg"
-                alt="Vercel logomark"
-                width={16}
-                height={16}
-              />
-              Deploy Now
-            </a>
-            <a
-              className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-              href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Documentation
-            </a>
-          </div> */}
         </div>
       </main>
     </div>
