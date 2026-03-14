@@ -15,11 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import Grainient from "./Grainient";
 // 1. Import Zod dan React Hook Form
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GlassCard } from "@/components/ui/glass-card";
 
 // 2. Buat Skema Validasi Zod (Sangat Ketat & Profesional)
 const formSchema = z.object({
@@ -103,18 +104,55 @@ export default function Home() {
   };
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-950
-       p-4"
+      className="relative flex min-h-screen items-center justify-center p-4
+      overflow-hidden font-sans"
     >
-      <main className="w-full max-w-md">
-        <div
-          className="flex flex-col bg-white dark:bg-zinc-900 shadow-xl rounded-2xl p-8 border
-       border-zinc-200 dark:border-zinc-800"
+      {/* LAYER 1: Gambar Background (Paling Bawah) */}
+      <div className="absolute inset-0 z-0">
+        <Grainient
+          color1="#FF9FFC"
+          color2="#5227FF"
+          color3="#B19EEF"
+          timeSpeed={1}
+          colorBalance={0}
+          warpStrength={1}
+          warpFrequency={5}
+          warpSpeed={2}
+          warpAmplitude={50}
+          blendAngle={0}
+          blendSoftness={0.05}
+          rotationAmount={500}
+          noiseScale={2}
+          grainAmount={0.1}
+          grainScale={2}
+          grainAnimated={false}
+          contrast={1.5}
+          gamma={1}
+          saturation={1}
+          centerX={0}
+          centerY={0}
+          zoom={0.8}
+        />
+      </div>
+
+      {/* LAYER 2: Overlay Warna (Menutupi Gambar agar form terbaca) */}
+      {/* Disini kita menaruh bg-zinc-50 dengan opacity agar gambar
+      dibelakangnya terlihat samar */}
+      <div
+        className="absolute inset-0 z-10 bg-zinc-50/0 dark:bg-zinc-950/80
+      pointer-events-none"
+      />
+
+      {/* LAYER 3: Form Utama (Paling Atas) */}
+      <main className="w-full max-w-md relative z-20">
+        <GlassCard
+          className="flex flex-col  backdrop-blur-md
+       shadow-2xl rounded-3xl p-8 border "
         >
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-3">
             <Image
               className="dark:invert"
-              src="/next.svg"
+              src="/logo.svg"
               alt="Next.js logo"
               width={120}
               height={24}
@@ -182,11 +220,11 @@ export default function Home() {
               <div className="space-y-2">
                 <Label htmlFor="slug">Short URL</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-zinc-500 text-sm">/</span>
+                  <span className="text-black  text-sm">/</span>
                   <Input
                     id="slug"
                     type="text"
-                    placeholder="promoku-2026"
+                    placeholder="oprec-bem-unsoed"
                     {...register("slug")} // Pengganti value & onChange
                     className={errors.slug ? "border-red-500" : ""}
                   />
@@ -279,7 +317,7 @@ export default function Home() {
               </div>
             </form>
           </div>
-        </div>
+        </GlassCard>
       </main>
     </div>
   );
