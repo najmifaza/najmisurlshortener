@@ -32,7 +32,8 @@ type FormData = z.infer<typeof formSchema>;
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
+  const [shortUrl, setShortUrl] = useState(""); // Untuk menyimpan URL lengkap yang akan di-copy
+  const [copied, setCopied] = useState(false);
   // 3. Inisialisasi React Hook Form
   const {
     register,
@@ -65,12 +66,22 @@ export default function Home() {
         alert("Gagal membuat link: " + error.message);
       }
     } else {
-      setSuccessMessage(`Berhasil! Link Anda: localhost:3000/${data.slug}`);
-      reset(); // Kosongkan form otomatis setelah berhasil
+      const fullUrl = `${window.location.origin}/${data.slug}`;
+      setShortUrl(fullUrl); // Simpan URL lengkap ke state
+      setSuccessMessage(`Berhasil! Link Anda sudah siap.`); // Pesan sukses singkat saja
+      reset();
     }
     setLoading(false);
   };
+  const handleCopy = async () => {
+    if (shortUrl) {
+      await navigator.clipboard.writeText(shortUrl);
+      setCopied(true);
 
+      // Kembalikan tulisan tombol ke "Copy" setelah 2 detik
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-950
@@ -99,10 +110,30 @@ export default function Home() {
 
             {successMessage && (
               <div
-                className="p-3 bg-green-100 text-green-700 rounded-md text-sm text-center border
-       border-green-200"
+                className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl
+      space-y-3"
               >
-                {successMessage}
+                <p className="text-sm font-medium text-green-800 dark:text-green-300 text-center">
+                  {successMessage}
+                </p>
+
+                <div
+                  className="flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-lg border border-zinc-200
+      dark:border-zinc-700"
+                >
+                  <code className="flex-1 text-xs truncate text-zinc-600 dark:text-zinc-400 px-1">
+                    {shortUrl}
+                  </code>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={copied ? "default" : "outline"}
+                    className="h-8 text-xs px-3 transition-all"
+                    onClick={handleCopy}
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
               </div>
             )}
 
