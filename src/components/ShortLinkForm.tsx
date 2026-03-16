@@ -43,11 +43,7 @@ const formSchema = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: "Slug hanya boleh berisi huruf kecil, angka, dan strip (-).",
     }),
-  lembaga: z
-    .string({
-      required_error: "Silakan pilih lembaga.",
-    })
-    .min(1, "Silakan pilih lembaga."),
+  lembaga: z.string().min(1, { message: "Silakan pilih lembaga." }),
 });
 
 // Infer type dari schema
