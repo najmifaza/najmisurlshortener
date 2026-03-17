@@ -28,10 +28,10 @@ export default function Database() {
         <GlassCard className="">
           <GlassCardHeader className="items-center">
             <GlassAvatar className="h-16 w-16">
-              <GlassAvatarImage src="/Admin.jpg" alt="User" />
+              <GlassAvatarImage src="/Adminn.jpg" alt="User" />
               <GlassAvatarFallback>Najmi</GlassAvatarFallback>
             </GlassAvatar>
-            <GlassCardTitle className="mt-4">Najmi Faza</GlassCardTitle>
+            <GlassCardTitle className="mt-4">Siapa Yaaa</GlassCardTitle>
             <GlassCardDescription className="text-center">
               <span className="font-bold"> Kementrian Media Komunikasi </span>
               <br />
