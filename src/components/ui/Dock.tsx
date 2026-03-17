@@ -1,6 +1,7 @@
 "use client";
+
 import { GlassDock } from "@/components/ui/glass-dock";
-import { Home, Database, ContactRound } from "lucide-react";
+import { Home, Database, ContactRound, Link } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function Dock() {
@@ -12,6 +13,13 @@ export default function Dock() {
       label: "Home",
       href: "/",
       active: pathname === "/",
+    },
+    {
+      id: "shortener",
+      icon: <Link />,
+      label: "Shortner",
+      href: "/shortener",
+      active: pathname === "/shortener  ",
     },
     {
       id: "database",

@@ -7,12 +7,12 @@ import { Slot } from "@radix-ui/react-slot";
 
 const glassButtonVariants = cva(
   cn(
-    "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl cursor-pointer",
+    "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full cursor-pointer",
     "text-sm font-medium transition-all duration-300 ease-out",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
     "disabled:pointer-events-none disabled:opacity-50",
     "hover:scale-101 active:scale-99",
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ",
   ),
   {
     variants: {
@@ -84,8 +84,9 @@ const GlassButton = React.forwardRef<HTMLButtonElement, GlassButtonProps>(
     ref,
   ) => {
     const Comp = asChild ? Slot : "button";
+    const isFullWidth = className?.includes("w-full");
     return (
-      <div className="w-full relative inline-block">
+      <div className={cn("relative", isFullWidth ? "w-full" : "inline-block")}>
         {glowEffect && (
           <div className="absolute -inset-1 rounded-xl bg-linear-to-r from-cyan-500/40 via-blue-500/40 to-purple-500/40 blur-lg opacity-70 transition-opacity group-hover:opacity-100" />
         )}
@@ -94,7 +95,7 @@ const GlassButton = React.forwardRef<HTMLButtonElement, GlassButtonProps>(
           ref={ref}
           {...props}
         >
-          <span className="relative z-10 flex items-center gap-2">
+          <span className="relative z-10 flex items-center justify-center gap-2">
             {children}
           </span>
         </Comp>
