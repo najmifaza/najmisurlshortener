@@ -25,12 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} `}>
+    <html lang="en" className={`${geistSans.variable} h-dvh `}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        // Tambahkan relative, h-full, dan overflow-hidden di sini juga
+        className={`${geistSans.variable} ${geistMono.variable} antialiased relative h-full
+       bg-zinc-950`}
       >
         {" "}
-        <div className="absolute inset-0 z-0">
+        <div className="fixed inset-0 z-0">
           <Grainient
             color1="#a79dda"
             color2="#201d39"

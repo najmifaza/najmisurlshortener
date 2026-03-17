@@ -37,10 +37,6 @@ export default async function Database() {
       />
       {/* LAYER 3: Form Utama (Paling Atas) */}
       <main className="w-full max-w-2xl relative z-20">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">
-          Data Link Shortener
-        </h1>
-
         <GlassTable className="max-h-95 sm: max-h-120 ">
           <GlassTableHeader>
             <GlassTableRow>

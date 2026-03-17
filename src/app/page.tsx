@@ -1,23 +1,36 @@
-import { ArrowUpRight, CirclePlay, Instagram } from "lucide-react";
+"use client";
+import { ArrowUpRight, Instagram } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { GlassBadge } from "@/components/ui/glass-badge";
 import { GlassButton } from "@/components/ui/glass-button";
-
+import BlurText from "@/components/BlurText";
 export default function Hero() {
+  const handleAnimationComplete = () => {
+    console.log("Animation completed!");
+  };
   return (
     <div className="dark">
-      <div className="flex min-h-screen items-center justify-center px-6 ">
-        <div className="relative z-10 max-w-3xl text-center">
+      <div
+        className="flex min-h-screen items-start sm:items-center justify-center px-6 pt-30
+      sm:pt-0"
+      >
+        <div className="relative z-10 max-w-3xl text-center  ">
           <GlassBadge asChild className="rounded-full border-border py-1 ">
             <Link href="#" className="inline-flex items-center">
               Just released v1.0.0 <ArrowUpRight className="ml-1 size-4" />
             </Link>
           </GlassBadge>
-          <h1 className="text-white/80 mt-6 font-semibold text-4xl tracking-tighter sm:text-5xl md:text-6xl md:leading-[1.2] lg:text-7xl">
-            Bikin Link Proker <br />
-            Nggak Ribet Lagi
-          </h1>
+          <BlurText
+            text="Bikin Link kepanitiaan Nggak Ribet Lagi"
+            delay={200}
+            animateBy="words"
+            direction="top"
+            onAnimationComplete={handleAnimationComplete}
+            className="text-white/80 mt-6 font-semibold  justify-center text-4xl tracking-tighter sm:text-5xl md:text-6xl md:leading-[1.2] lg:text-7xl"
+            animationFrom={undefined}
+            animationTo={undefined}
+          />
+
           <p className="mt-6 text-foreground/80 md:text-lg">
             Ubah URL panjang yang rumit menjadi tautan pendek yang rapi dan
             mudah dibagikan. Kelola semua tautan Anda dalam satu dashboard
