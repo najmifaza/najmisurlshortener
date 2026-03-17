@@ -9,7 +9,7 @@ import {
 } from "@/components/glass-table";
 import { GlassButton } from "@/components/ui/glass-button";
 import { supabase } from "@/lib/supabase";
-
+import CopyButton from "@/components/CopyButton";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -53,9 +53,7 @@ export default async function Database() {
                   {link.lembaga || "Umum"}
                 </GlassTableCell>
                 <GlassTableCell>
-                  <GlassButton size="sm" variant="outline">
-                    {link.slug}
-                  </GlassButton>
+                  <CopyButton slug={link.slug} />
                 </GlassTableCell>
                 <GlassTableCell className="text-xs opacity-60">
                   {/* Format tanggal agar mudah dibaca */}
