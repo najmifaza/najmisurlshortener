@@ -84,8 +84,8 @@ const GlassTableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-black/50",
-      "sticky top-0 bg-[#c4bedd] backdrop-blur-md z-30 ",
+      "h-12 px-4 text-left align-middle font-bold text-black/50",
+      "sticky top-0 bg-[#c4bedd]/90   z-30 ",
       "[&:has([role=checkbox])]:pr-0",
       className,
     )}
