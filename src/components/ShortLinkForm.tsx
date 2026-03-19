@@ -73,6 +73,16 @@ export default function ShortLinkForm() {
 
   // 4. Fungsi Submit yang baru (Data sudah PASTI valid saat masuk ke sini)
   const onSubmit = async (data: FormData) => {
+    const passwordInput = window.prompt(
+      "Masukkan Password Admin untuk membuat link:",
+    );
+
+    // 2. Cek apakah password benar (Silakan ganti 'admin123' dengan password keinginan Anda)
+    if (passwordInput !== "ditjenwebgantengsemua") {
+      alert("Password Salah! Anda tidak memiliki akses.");
+      return; // Berhenti di sini, jangan lanjut simpan ke database
+    }
+
     setLoading(true);
     setSuccessMessage(""); // Reset pesan sukses
 
