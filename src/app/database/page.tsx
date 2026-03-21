@@ -1,4 +1,3 @@
-import { GlassScrollArea } from "@/components/glass-scroll-area";
 import {
   GlassTable,
   GlassTableBody,
@@ -7,7 +6,6 @@ import {
   GlassTableRow,
   GlassTableHead,
 } from "@/components/glass-table";
-import { GlassButton } from "@/components/ui/glass-button";
 import { supabase } from "@/lib/supabase";
 import CopyButton from "@/components/CopyButton";
 export const dynamic = "force-dynamic";
@@ -35,30 +33,29 @@ export default async function Database() {
         className="absolute inset-0 z-10 bg-zinc-50/0 dark:bg-zinc-950/80
                 pointer-events-none"
       />
-      {/* LAYER 3: Form Utama (Paling Atas) */}
       <main className="w-full max-w-2xl relative z-20">
         <GlassTable className="max-h-145 sm:max-h-120 ">
           <GlassTableHeader>
             <GlassTableRow>
-              <GlassTableHead>Lembaga</GlassTableHead>
+              <GlassTableHead className="w-px whitespace-nowrap">Lembaga</GlassTableHead>
               <GlassTableHead>Slug</GlassTableHead>
-              <GlassTableHead className="text-right">Klik</GlassTableHead>
-              <GlassTableHead>Tanggal</GlassTableHead>
+              <GlassTableHead className="text-right w-px whitespace-nowrap">Klik</GlassTableHead>
+              <GlassTableHead className="w-px whitespace-nowrap">Tanggal</GlassTableHead>
             </GlassTableRow>
-          </GlassTableHeader>{" "}
+          </GlassTableHeader>
           <GlassTableBody>
             {links?.map((link) => (
               <GlassTableRow key={link.id}>
-                <GlassTableCell className="font-medium">
+                <GlassTableCell className="font-medium whitespace-nowrap">
                   {link.lembaga || "Umum"}
                 </GlassTableCell>
-                <GlassTableCell>
+                <GlassTableCell className="min-w-37.5">
                   <CopyButton slug={link.slug} />
                 </GlassTableCell>
-                <GlassTableCell className="text-right  font-bold">
+                <GlassTableCell className="text-right font-bold whitespace-nowrap">
                   {link.jumlah_klik || 0}
                 </GlassTableCell>
-                <GlassTableCell className="text-xs opacity-60">
+                <GlassTableCell className="text-xs opacity-60 whitespace-nowrap">
                   {/* Format tanggal agar mudah dibaca */}
                   {new Date(link.created_at).toLocaleDateString("id-ID")}
                 </GlassTableCell>
@@ -75,7 +72,7 @@ export default async function Database() {
                 </GlassTableCell>
               </GlassTableRow>
             )}
-          </GlassTableBody>{" "}
+          </GlassTableBody>
         </GlassTable>
       </main>
     </div>

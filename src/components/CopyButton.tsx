@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { GlassButton } from "@/components/ui/glass-button";
-import { Check, Copy } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function CopyButton({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);

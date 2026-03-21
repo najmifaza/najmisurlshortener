@@ -1,16 +1,7 @@
+"use client";
+
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { GlassCard } from "@/components/ui/glass-card";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -18,7 +9,6 @@ import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GlassTable } from "./glass-table";
 import {
   GlassSelect,
   GlassSelectContent,
@@ -31,11 +21,29 @@ import {
 import { GlassInput } from "./ui/glass-input";
 import { GlassButton } from "./ui/glass-button";
 import { LEMBAGA_LIST } from "@/lib/constants";
+import { toast } from "sonner";
+import { GlassNotification } from "./glass-notification";
+import {
+  GlassDialog,
+  GlassDialogContent,
+  GlassDialogDescription,
+  GlassDialogFooter,
+  GlassDialogHeader,
+  GlassDialogTitle,
+} from "./ui/glass-dialog";
+
 // 2. Buat Skema Validasi Zod (Sangat Ketat & Profesional)
 const formSchema = z.object({
-  urlAsli: z.string().min(1, { message: "URL Asli tidak boleh kosong." }).url({
-    message: "Format tidak valid. Harus diawali http:// atau https://",
-  }),
+  urlAsli: z
+    .string()
+    .min(1, { message: "URL Asli tidak boleh kosong." })
+    .regex(
+      /^(?:(?:https?:\/\/)?(?:www\.)?)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+(?:\/[^\s]*)?$/,
+      {
+        message:
+          "Format URL tidak valid (contoh: google.com atau https://google.com)",
+      },
+    ),
   slug: z
     .string()
     .min(3, { message: "Slug minimal 3 karakter." })
@@ -51,9 +59,10 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function ShortLinkForm() {
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [shortUrl, setShortUrl] = useState(""); // Untuk menyimpan URL lengkap yang akan di-copy
-  const [copied, setCopied] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [pendingData, setPendingData] = useState<FormData | null>(null);
+
   // 3. Inisialisasi React Hook Form
   const {
     register,
@@ -61,7 +70,6 @@ export default function ShortLinkForm() {
     formState: { errors },
     reset,
     setValue,
-    watch,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -71,176 +79,248 @@ export default function ShortLinkForm() {
     },
   });
 
-  // 4. Fungsi Submit yang baru (Data sudah PASTI valid saat masuk ke sini)
-  const onSubmit = async (data: FormData) => {
-    const passwordInput = window.prompt(
-      "Masukkan Password Admin untuk membuat link:",
-    );
+  // 4. Fungsi Submit yang baru
+  const onSubmit = (data: FormData) => {
+    // Simpan data sementara dan buka dialog password
+    setPendingData(data);
+    setIsPasswordDialogOpen(true);
+  };
 
-    // 2. Cek apakah password benar (Silakan ganti 'admin123' dengan password keinginan Anda)
-    if (passwordInput !== "ditjenwebganteng") {
-      alert("Password Salah! Anda tidak memiliki akses.");
-      return; // Berhenti di sini, jangan lanjut simpan ke database
+  const handleVerifyAndSubmit = async () => {
+    if (!pendingData) return;
+
+    // Cek apakah password benar
+    if (adminPassword !== "ditjenwebganteng") {
+      toast.custom(() => (
+        <GlassNotification
+          type="error"
+          title="Password Salah!"
+          description="Hanya admin BEM yang diperbolehkan membuat link."
+          className="w-87.5"
+        />
+      ));
+      return;
     }
 
     setLoading(true);
-    setSuccessMessage(""); // Reset pesan sukses
+    setIsPasswordDialogOpen(false); // Tutup dialog
+
+    // Auto-prepend https:// jika tidak ada protokol
+    let finalUrl = pendingData.urlAsli;
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = `https://${finalUrl}`;
+    }
 
     // Simpan ke Supabase
-    const { error } = await supabase
-      .from("links")
-      .insert([
-        { url_asli: data.urlAsli, slug: data.slug, lembaga: data.lembaga },
-      ]);
+    const { error } = await supabase.from("links").insert([
+      {
+        url_asli: finalUrl,
+        slug: pendingData.slug,
+        lembaga: pendingData.lembaga,
+      },
+    ]);
 
     if (error) {
-      // Cek apakah error karena slug sudah dipakai (Error code unik di PostgreSQL biasanya 23505)
-      if (error.code === "23505") {
-        alert("Gagal: Slug ini sudah digunakan. Silakan pilih slug lain.");
-      } else {
-        alert("Gagal membuat link: " + error.message);
-      }
+      const isDuplicate = error.code === "23505";
+      toast.custom(() => (
+        <GlassNotification
+          type="error"
+          title="Gagal Membuat Link!"
+          description={
+            isDuplicate
+              ? "Slug ini sudah digunakan. Silakan pilih slug lain."
+              : error.message
+          }
+          className="w-87.5"
+        />
+      ));
     } else {
-      const fullUrl = `bem-unsoed.com/${data.slug}`;
-      setShortUrl(fullUrl); // Simpan URL lengkap ke state
-      setSuccessMessage(`Berhasil! Link Anda sudah siap.`); // Pesan sukses singkat saja
+      const fullUrl = `bem-unsoed.com/${pendingData.slug}`;
+
+      toast.custom(() => (
+        <GlassNotification
+          type="success"
+          title="Berhasil!"
+          className="w-87.5"
+          description={
+            <div className="space-y-3 mt-2">
+              <p className="text-white/70">Link Anda sudah siap.</p>
+              <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg border border-white/10 backdrop-blur-md">
+                <code className="flex-1 text-xs truncate text-white/90 px-1 font-mono">
+                  {fullUrl}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(fullUrl);
+                    toast.success("Copied!", { id: "copy-success" });
+                  }}
+                  className="h-8 text-xs px-3 bg-white/20 hover:bg-white/30 text-white rounded-md font-medium transition-all border border-white/10"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          }
+        />
+      ));
+
       reset();
+      setAdminPassword(""); // Reset password input
+      setPendingData(null);
     }
     setLoading(false);
   };
-  const handleCopy = async () => {
-    if (shortUrl) {
-      await navigator.clipboard.writeText(shortUrl);
-      setCopied(true);
 
-      // Kembalikan tulisan tombol ke "Copy" setelah 2 detik
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
   return (
-    <GlassCard
-      className="flex flex-col  backdrop-blur-md
+    <>
+      <GlassCard
+        className="flex flex-col  backdrop-blur-md
        shadow-2xl rounded-3xl p-8 border "
-    >
-      <div className="flex justify-center mb-3">
-        <Image
-          className="dark:invert"
-          src="/logo.svg"
-          alt="BEM-U logo"
-          width={120}
-          height={24}
-          priority
-        />
-      </div>
+      >
+        <div className="flex justify-center mb-3">
+          <Image
+            className="dark:invert"
+            src="/logo.svg"
+            alt="BEM-U logo"
+            width={120}
+            height={24}
+            priority
+          />
+        </div>
 
-      <div className="w-full space-y-6 text-center sm:text-left">
-        <h2 className="font-bold text-2xl text-zinc-50 dark:text-zinc-50 text-center">
-          Generate Short Link
-        </h2>
+        <div className="w-full space-y-6 text-center sm:text-left">
+          <h2 className="font-bold text-2xl text-zinc-50 dark:text-zinc-50 text-center">
+            Generate Short Link
+          </h2>
 
-        {successMessage && (
-          <div
-            className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl
-      space-y-3"
+          {/* Hubungkan form dengan handleSubmit dari React Hook Form */}
+
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6 text-left"
           >
-            <p className="text-sm font-medium text-green-800 dark:text-green-300 text-center">
-              {successMessage}
-            </p>
-
-            <div
-              className="flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-lg border border-zinc-200
-      dark:border-zinc-700"
-            >
-              <code className="flex-1 text-xs truncate text-zinc-600 dark:text-zinc-400 px-1">
-                {shortUrl}
-              </code>
-              <Button
-                type="button"
-                size="sm"
-                variant={copied ? "default" : "outline"}
-                className="h-8 text-xs px-3 transition-all"
-                onClick={handleCopy}
-              >
-                {copied ? "Copied!" : "Copy"}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Hubungkan form dengan handleSubmit dari React Hook Form */}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
-          <div className="space-y-2">
-            <Label htmlFor="urlAsli">Real URL</Label>
-            <GlassInput
-              id="urlAsli"
-              type="text"
-              placeholder="https://contoh.com/artikel-sangat-panjang"
-              {...register("urlAsli")} // Pengganti value & onChange
-              className={errors.urlAsli ? "border-red-500" : ""}
-            />
-            {/* Tampilkan pesan error Zod jika ada */}
-            {errors.urlAsli && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.urlAsli.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="slug">Short URL</Label>
-            <div className="flex items-center gap-2">
-              <span className="text-white  text-sm">/</span>
+            <div className="space-y-2">
+              <Label htmlFor="urlAsli">Real URL</Label>
               <GlassInput
-                id="slug"
+                id="urlAsli"
                 type="text"
-                placeholder="oprec-bem-unsoed"
-                {...register("slug")} // Pengganti value & onChange
-                className={errors.slug ? "border-red-500" : ""}
+                placeholder="https://contoh.com/artikel-sangat-panjang"
+                {...register("urlAsli")} // Pengganti value & onChange
+                className={errors.urlAsli ? "border-red-500" : ""}
+              />
+              {/* Tampilkan pesan error Zod jika ada */}
+              {errors.urlAsli && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.urlAsli.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slug">Short URL</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-white  text-sm">/</span>
+                <GlassInput
+                  id="slug"
+                  type="text"
+                  placeholder="oprec-bem-unsoed"
+                  {...register("slug")} // Pengganti value & onChange
+                  className={errors.slug ? "border-red-500" : ""}
+                />
+              </div>
+              {/* Tampilkan pesan error Zod jika ada */}
+              {errors.slug && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.slug.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="Kementrian">Lembaga</Label>
+              <GlassSelect
+                onValueChange={(value) => setValue("lembaga", value)}
+              >
+                <GlassSelectTrigger
+                  className={`w-full ${errors.lembaga ? "border-red-500" : ""}`}
+                >
+                  <GlassSelectValue placeholder="Pilih kementrian atau biro" />
+                </GlassSelectTrigger>
+                <GlassSelectContent>
+                  <GlassSelectGroup>
+                    <GlassSelectLabel>Kementerian / Biro</GlassSelectLabel>
+                    {LEMBAGA_LIST.map((lembaga) => (
+                      <GlassSelectItem key={lembaga} value={lembaga}>
+                        {lembaga}
+                      </GlassSelectItem>
+                    ))}
+                  </GlassSelectGroup>
+                </GlassSelectContent>
+              </GlassSelect>
+              {errors.lembaga && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.lembaga.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <GlassButton
+                variant="default"
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Generating..." : "Generate"}
+              </GlassButton>
+            </div>
+          </form>
+        </div>
+      </GlassCard>
+
+      {/* Dialog Password Admin */}
+      <GlassDialog
+        open={isPasswordDialogOpen}
+        onOpenChange={setIsPasswordDialogOpen}
+      >
+        <GlassDialogContent className="sm:max-w-md">
+          <GlassDialogHeader>
+            <GlassDialogTitle>Verifikasi Admin</GlassDialogTitle>
+            <GlassDialogDescription>
+              Masukkan password admin untuk membuat link singkat baru.
+            </GlassDialogDescription>
+          </GlassDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin-password">Password</Label>
+              <GlassInput
+                id="admin-password"
+                type="password"
+                placeholder="••••••••"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleVerifyAndSubmit();
+                }}
               />
             </div>
-            {/* Tampilkan pesan error Zod jika ada */}
-            {errors.slug && (
-              <p className="text-sm text-red-500 mt-1">{errors.slug.message}</p>
-            )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="Kementrian">Lembaga</Label>
-            <GlassSelect onValueChange={(value) => setValue("lembaga", value)}>
-              <GlassSelectTrigger
-                className={`w-full ${errors.lembaga ? "border-red-500" : ""}`}
-              >
-                <GlassSelectValue placeholder="Pilih kementrian atau biro" />
-              </GlassSelectTrigger>
-              <GlassSelectContent>
-                <GlassSelectGroup>
-                  <GlassSelectLabel>Kementerian / Biro</GlassSelectLabel>
-                  {LEMBAGA_LIST.map((lembaga) => (
-                    <GlassSelectItem key={lembaga} value={lembaga}>
-                      {lembaga}
-                    </GlassSelectItem>
-                  ))}
-                </GlassSelectGroup>
-              </GlassSelectContent>
-            </GlassSelect>
-            {errors.lembaga && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.lembaga.message}
-              </p>
-            )}
-          </div>
-          <div>
+          <GlassDialogFooter className="flex flex-row gap-1.5">
             <GlassButton
-              variant="default"
-              type="submit"
-              className="w-full"
-              disabled={loading}
+              type="button"
+              variant="outline"
+              onClick={() => setIsPasswordDialogOpen(false)}
             >
-              {loading ? "Generating..." : "Generate"}
+              Batal
             </GlassButton>
-          </div>
-        </form>
-      </div>
-    </GlassCard>
+            <GlassButton
+              type="button"
+              onClick={handleVerifyAndSubmit}
+              disabled={loading || !adminPassword}
+            >
+              {loading ? "Memproses..." : "Buat Link"}
+            </GlassButton>
+          </GlassDialogFooter>
+        </GlassDialogContent>
+      </GlassDialog>
+    </>
   );
 }

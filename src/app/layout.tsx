@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Grainient from "@/components/background/Grainient";
 import Dock from "@/components/ui/Dock";
-
+import { Toaster } from "sonner";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -61,7 +61,7 @@ export default function RootLayout({
             zoom={0.8}
           />
         </div>
-        {children}
+        {children} <Toaster position="top-center" richColors />
         <Dock />
       </body>
     </html>

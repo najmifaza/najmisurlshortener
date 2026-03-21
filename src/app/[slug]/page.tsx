@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { redirect, notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Tipe data untuk parameter
 interface PageProps {
   params: Promise<{
@@ -18,12 +21,12 @@ export default async function RedirectPage({ params }: PageProps) {
     .from("links")
     .select("url_asli, jumlah_klik")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
 
   // 3. Jika error atau data tidak ditemukan, tampilkan halaman 404
   if (error || !data) {
-    console.error("Link tidak ditemukan:", error?.message);
-    notFound(); // Ini akan mengarahkan ke halaman 404 bawaan Next.js
+    if (error) console.error("Database error:", error.message);
+    notFound(); // Ini akan mengarahkan ke halaman 404 kustom
   }
   supabase
     .from("links")

@@ -2,8 +2,9 @@
 
 import type * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@/lib/utils";
+
 const glassBadgeVariants = cva(
   cn(
     "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
@@ -36,16 +37,22 @@ const glassBadgeVariants = cva(
 );
 
 export interface GlassBadgeProps
-  extends
-    React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof glassBadgeVariants> {
   asChild?: boolean;
 }
 
-function GlassBadge({ className, variant, ...props }: GlassBadgeProps) {
+function GlassBadge({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: GlassBadgeProps) {
+  const Comp = asChild ? Slot : "div";
   return (
-    <div
-      className={cn(glassBadgeVariants({ variant }), className)}
+    <Comp
+      className={cn(glassBadgeVariants({ variant, size }), className)}
       {...props}
     />
   );

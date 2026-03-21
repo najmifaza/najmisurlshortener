@@ -3,9 +3,7 @@ import {
   GlassAvatarFallback,
   GlassAvatarImage,
 } from "@/components/ui/glass-avatar";
-import { GlassBadge } from "@/components/ui/glass-badge";
 import {
-  GlassCard,
   GlassCardContent,
   GlassCardDescription,
   GlassCardHeader,
