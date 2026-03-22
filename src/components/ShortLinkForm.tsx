@@ -281,7 +281,7 @@ export default function ShortLinkForm() {
         open={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
       >
-        <GlassDialogContent className="sm:max-w-md">
+        <GlassDialogContent className="sm:max-w-md  ">
           <GlassDialogHeader>
             <GlassDialogTitle>Verifikasi Admin</GlassDialogTitle>
             <GlassDialogDescription>
